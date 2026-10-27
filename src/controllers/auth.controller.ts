@@ -31,7 +31,7 @@ export async function register(req: Request, res: Response) {
   });
   const tokens = tokenPair(user.id);
   await prisma.refreshToken.create({ data: { token: tokens.refreshToken, userId: user.id } });
-  res.status(201).json({ user: withoutCreatedAt(user), ...tokens });
+  res.status(201).json({ user: toPublicUser(user), ...tokens });
 }
 
 export async function login(req: Request, res: Response) {
@@ -45,7 +45,7 @@ export async function login(req: Request, res: Response) {
     prisma.refreshToken.deleteMany({ where: { userId: user.id } }),
     prisma.refreshToken.create({ data: { token: tokens.refreshToken, userId: user.id } }),
   ]);
-  res.json({ user: withoutCreatedAt(user), ...tokens });
+  res.json({ user: toPublicUser(user), ...tokens });
 }
 
 export async function refresh(req: Request, res: Response) {
@@ -81,7 +81,11 @@ export async function me(req: Request, res: Response) {
   res.json(user);
 }
 
-function withoutCreatedAt<T extends { createdAt: Date }>(user: T) {
-  const { createdAt: _createdAt, ...result } = user;
-  return result;
+function toPublicUser(user: { id: number; username: string; email: string; name: string }) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    name: user.name,
+  }
 }
